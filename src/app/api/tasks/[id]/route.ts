@@ -37,14 +37,15 @@ export async function DELETE(
 ) {
   try {
     await prisma.task.delete({
-      where: { id: params.id }
-    })
+      where: { id: (params.id) }, // ✅ แปลงเป็น Number
+    });
 
-    return NextResponse.json({ message: 'Task deleted successfully' })
+    return NextResponse.json({ message: 'Task deleted successfully' });
   } catch (error) {
+    console.error('Delete Task Error:', error); // ✅ ใช้งาน error ป้องกัน warning
     return NextResponse.json(
       { error: 'Failed to delete task' },
       { status: 500 }
-    )
+    );
   }
 }

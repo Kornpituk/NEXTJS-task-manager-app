@@ -32,19 +32,16 @@ export async function PATCH(
 }
 
 // DELETE - ลบ Task
-export async function DELETE(
-  request: Request,
-  context: { params: Record<string, string | string[]> }
-) {
+export async function DELETE(request: Request, context: any) {
   try {
-    const id = context.params.id as string; // ✅ ดึง id จาก Record
+    const id = context.params.id; // ✅ ใช้ context แบบ any
     await prisma.task.delete({
-      where: { id }, // ✅ id เป็น string ตรงกับ Prisma schema
+      where: { id },
     });
 
     return NextResponse.json({ message: "Task deleted successfully" });
   } catch (error) {
-    console.error("Delete Task Error:", error);
+    console.error("Delete Task Error:", error); // ✅ ใช้ error ป้องกัน warning
     return NextResponse.json(
       { error: "Failed to delete task" },
       { status: 500 }

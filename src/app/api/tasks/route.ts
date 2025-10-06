@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
@@ -5,23 +6,37 @@ import { prisma } from "@/lib/prisma";
 // src/app/api/tasks/route.ts
 export async function GET() {
   try {
+    // ✅ เช็ค Prisma connection
+    await prisma.$connect();
+    
     const tasks = await prisma.task.findMany({
       orderBy: { createdAt: "desc" },
     });
-    return NextResponse.json(tasks);
-  } catch (err) {
-    // เปลี่ยนจาก error เป็น err
+    
+    // ✅ Ensure return array
+    return NextResponse.json(Array.isArray(tasks) ? tasks : []);
+    
+  } catch (err: any) {
     console.error("Fetch Tasks Error:", err);
-    return NextResponse.json(
-      { error: "Failed to fetch tasks" },
-      { status: 500 }
-    );
+    
+    // ✅ ส่ง empty array กลับแทน error (เพื่อไม่ให้ frontend crash)
+    return NextResponse.json([], { 
+      status: 200, // เปลี่ยนเป็น 200 แต่ส่ง []
+      headers: {
+        'X-Error': 'Database connection failed'
+      }
+    });
+    
+  } finally {
+    await prisma.$disconnect();
   }
 }
 
 // POST - สร้าง Task ใหม่
 export async function POST(request: Request) {
   try {
+    await prisma.$connect(); // ✅ เพิ่ม
+    
     const body = await request.json();
     const { title, description } = body;
 
@@ -37,12 +52,14 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json(task, { status: 201 });
-  } catch (err) {
-    // เปลี่ยนจาก error เป็น err
+    
+  } catch (err: any) {
     console.error("Create Task Error:", err);
     return NextResponse.json(
-      { error: "Failed to create task" },
+      { error: "Failed to create task", details: err.message },
       { status: 500 }
     );
+  } finally {
+    await prisma.$disconnect(); // ✅ เพิ่ม
   }
 }

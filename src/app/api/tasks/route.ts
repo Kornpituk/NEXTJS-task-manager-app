@@ -4,62 +4,51 @@ import { prisma } from "@/lib/prisma";
 
 // GET - ดึงรายการ Tasks ทั้งหมด
 // src/app/api/tasks/route.ts
-export async function GET() {
+// app/api/tasks/[id]/route.ts
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    // ✅ เช็ค Prisma connection
-    await prisma.$connect();
-    
-    const tasks = await prisma.task.findMany({
-      orderBy: { createdAt: "desc" },
-    });
-    
-    // ✅ Ensure return array
-    return NextResponse.json(Array.isArray(tasks) ? tasks : []);
-    
-  } catch (err: any) {
-    console.error("Fetch Tasks Error:", err);
-    
-    // ✅ ส่ง empty array กลับแทน error (เพื่อไม่ให้ frontend crash)
-    return NextResponse.json([], { 
-      status: 200, // เปลี่ยนเป็น 200 แต่ส่ง []
-      headers: {
-        'X-Error': 'Database connection failed'
-      }
-    });
-    
-  } finally {
-    await prisma.$disconnect();
-  }
-}
-
-// POST - สร้าง Task ใหม่
-export async function POST(request: Request) {
-  try {
-    await prisma.$connect(); // ✅ เพิ่ม
-    
+    const { id } = await params;
     const body = await request.json();
-    const { title, description } = body;
+    const { title, description, isCompleted } = body;
 
-    if (!title || title.trim() === "") {
-      return NextResponse.json({ error: "Title is required" }, { status: 400 });
-    }
-
-    const task = await prisma.task.create({
+    const updatedTask = await prisma.task.update({
+      where: { id },
       data: {
-        title: title.trim(),
-        description: description?.trim() || null,
+        ...(title !== undefined && { title }),
+        ...(description !== undefined && { description }),
+        ...(isCompleted !== undefined && { isCompleted }),
       },
     });
 
-    return NextResponse.json(task, { status: 201 });
-    
-  } catch (err: any) {
-    console.error("Create Task Error:", err);
+    return NextResponse.json(updatedTask);
+  } catch (error) {
+    console.error("Update Task Error:", error);
     return NextResponse.json(
-      { error: "Failed to create task", details: err.message },
+      { error: "Failed to update task" },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect(); // ✅ เพิ่ม
+  }
+}
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    await prisma.task.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({ message: "Task deleted successfully" });
+  } catch (error) {
+    console.error("Delete Task Error:", error);
+    return NextResponse.json(
+      { error: "Failed to delete task" },
+      { status: 500 }
+    );
   }
 }

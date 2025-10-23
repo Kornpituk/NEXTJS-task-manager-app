@@ -1,7 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, ListTodo, CheckCircle2, Circle } from 'lucide-react'
+import { useSession, signOut } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
+import { Plus, ListTodo, CheckCircle2, Circle, LogOut, User } from 'lucide-react'
 import { TaskCard } from '@/components/tasks/TaskCard'
 import { TaskForm } from '@/components/tasks/TaskForm'
 
@@ -17,26 +19,39 @@ interface Task {
 type FilterType = 'all' | 'active' | 'completed'
 
 export default function Home() {
+  const { data: session, status } = useSession()
+  const router = useRouter()
   const [tasks, setTasks] = useState<Task[]>([])
   const [filter, setFilter] = useState<FilterType>('all')
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
+  // Redirect ถ้ายังไม่ Login
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/login')
+    }
+  }, [status, router])
+
   // ดึงข้อมูล Tasks
   const fetchTasks = async () => {
     try {
       const res = await fetch('/api/tasks')
-      const data = await res.json()
-      setTasks(data)
+      if (res.ok) {
+        const data = await res.json()
+        setTasks(data)
+      }
     } catch (error) {
       console.error('Failed to fetch tasks:', error)
     }
   }
 
   useEffect(() => {
-    fetchTasks()
-  }, [])
+    if (status === 'authenticated') {
+      fetchTasks()
+    }
+  }, [status])
 
   // สร้าง/แก้ไข Task
   const handleSubmit = async (data: { title: string; description: string }) => {

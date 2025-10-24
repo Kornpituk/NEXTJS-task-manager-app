@@ -94,6 +94,15 @@ export default function LoginPage() {
               </div>
             </div>
 
+            <div className="text-right">
+              <Link
+                href="/forgot-password"
+                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+              >
+                ลืมรหัสผ่าน?
+              </Link>
+            </div>
+
             <button
               type="submit"
               disabled={isLoading}

@@ -163,17 +163,17 @@ export default function Home() {
                   as="button"
                   avatarProps={{
                     isBordered: true,
-                    src: "https://i.pravatar.cc/150?u=a042581f4e29026024d",
+                    src: "https://cdn.pixabay.com/photo/2015/11/16/14/43/cat-1045782_1280.jpg",
                   }}
                   className="transition-transform cursor-pointer"
-                  description="@tonyreichert"
-                  name="Tony Reichert"
+                  description={session?.user?.email}
+                  name={session?.user?.name}
                 />
               </DropdownTrigger>
               <DropdownMenu aria-label="User Actions" variant="flat">
                 <DropdownItem key="profile" className="h-14 gap-2">
                   <p className="font-bold">Signed in as</p>
-                  <p className="font-bold">@tonyreichert</p>
+                  <p className="font-bold">{session?.user?.email}</p>
                 </DropdownItem>
                 <DropdownItem key="settings">My Settings</DropdownItem>
                 <DropdownItem key="team_settings">Team Settings</DropdownItem>

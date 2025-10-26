@@ -12,7 +12,15 @@ export default function ForgotPasswordPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
     });
-    const data = await res.json();
+
+    let data;
+    try {
+      data = await res.json();
+    } catch {
+      setMessage("Server error: failed to parse response.");
+      return;
+    }
+
     setMessage(data.message);
   };
 

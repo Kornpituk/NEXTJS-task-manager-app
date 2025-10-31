@@ -3,16 +3,32 @@
 import { useState, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Plus, ListTodo, CheckCircle2, Circle, LogOut } from "lucide-react";
+import { 
+  Plus, 
+  ListTodo, 
+  CheckCircle2, 
+  Circle, 
+  LogOut,
+  User,
+  Settings,
+  Bell
+} from "lucide-react";
 import { TaskCard } from "@/components/tasks/TaskCard";
 import { TaskForm } from "@/components/tasks/TaskForm";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Dropdown,
   DropdownTrigger,
   DropdownMenu,
   DropdownItem,
   Avatar,
-  User,
+  Button,
+  Card,
+  CardBody,
+  Tabs,
+  Tab,
+  Badge,
+  Spinner,
 } from "@heroui/react";
 
 interface Task {
@@ -34,6 +50,7 @@ export default function Home() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
 
   // Redirect ถ้ายังไม่ Login
   useEffect(() => {
@@ -44,6 +61,7 @@ export default function Home() {
 
   // ดึงข้อมูล Tasks
   const fetchTasks = async () => {
+    setIsFetching(true);
     try {
       const res = await fetch("/api/tasks");
       if (res.ok) {
@@ -52,6 +70,8 @@ export default function Home() {
       }
     } catch (error) {
       console.error("Failed to fetch tasks:", error);
+    } finally {
+      setIsFetching(false);
     }
   };
 
@@ -125,11 +145,6 @@ export default function Home() {
     setIsFormOpen(true);
   };
 
-  //logout
-  const handleLogout = () => {
-    router.push("/login");
-  }
-
   // Filter tasks
   const filteredTasks = tasks.filter((task) => {
     if (filter === "active") return !task.isCompleted;
@@ -143,158 +158,240 @@ export default function Home() {
     completed: tasks.filter((t) => t.isCompleted).length,
   };
 
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <Spinner size="lg" color="primary" />
+          <p className="mt-4 text-gray-600">กำลังโหลด...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="max-w-4xl mx-auto p-4 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-100">
+      <div className="max-w-6xl mx-auto p-4 py-8">
         {/* Header */}
-        <div className="flex text-center mb-8 justify-between">
-          <div className="gap-3 mb-2 text-start">
-            <div className="flex items-center justify-start">
-            <ListTodo className="w-10 h-10 text-blue-600" /><h1 className="text-4xl font-bold text-gray-900">Task Manager</h1>
-            </div>
-            <div><p className="text-gray-600">จัดการงานของคุณอย่างมีประสิทธิภาพ</p></div>
-            
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center justify-between mb-8"
+        >
+          <div className="flex items-center gap-4">
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              className="flex items-center gap-3"
+            >
+              <div className="p-3 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl shadow-lg">
+                <ListTodo className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">Task Manager</h1>
+                <p className="text-gray-600">จัดการงานของคุณอย่างมีประสิทธิภาพ</p>
+              </div>
+            </motion.div>
           </div>
 
-          <div className="flex items-center gap-4">
-            <Dropdown placement="bottom-start">
-              <DropdownTrigger>
-                <User
-                  as="button"
-                  avatarProps={{
-                    isBordered: true,
-                    src: "https://cdn.pixabay.com/photo/2015/11/16/14/43/cat-1045782_1280.jpg",
-                  }}
-                  className="transition-transform cursor-pointer"
-                  description={session?.user?.email}
-                  name={session?.user?.name}
+          {/* User Menu */}
+          <Dropdown placement="bottom-end">
+            <DropdownTrigger>
+              <Button variant="light" className="p-2 min-w-0 h-auto">
+                <Avatar
+                  isBordered
+                  color="primary"
+                  src={session?.user?.image || undefined}
+                  name={session?.user?.name || session?.user?.email}
+                  className="transition-transform hover:scale-105"
                 />
-              </DropdownTrigger>
-              <DropdownMenu aria-label="User Actions" variant="flat">
-                <DropdownItem key="profile" className="h-14 gap-2">
-                  <p className="font-bold">Signed in as</p>
-                  <p className="font-bold">{session?.user?.email}</p>
-                </DropdownItem>
-                <DropdownItem key="settings">My Settings</DropdownItem>
-                <DropdownItem key="team_settings">Team Settings</DropdownItem>
-                <DropdownItem key="analytics">Analytics</DropdownItem>
-                <DropdownItem key="system">System</DropdownItem>
-                <DropdownItem key="configurations">Configurations</DropdownItem>
-                <DropdownItem key="help_and_feedback">
-                  Help & Feedback
-                </DropdownItem>
-                <DropdownItem  onClick={() => handleLogout()} key="logout" color="danger">
-                  Log Out
-                </DropdownItem>
-              </DropdownMenu>
-            </Dropdown>
-          </div>
-        </div>
+              </Button>
+            </DropdownTrigger>
+            <DropdownMenu aria-label="User Actions" variant="flat">
+              <DropdownItem key="profile" className="h-14 gap-2">
+                <p className="font-semibold">Signed in as</p>
+                <p className="font-semibold text-blue-600">{session?.user?.email}</p>
+              </DropdownItem>
+              <DropdownItem key="settings" startContent={<Settings className="w-4 h-4" />}>
+                Settings
+              </DropdownItem>
+              <DropdownItem key="notifications" startContent={<Bell className="w-4 h-4" />}>
+                Notifications
+              </DropdownItem>
+              <DropdownItem 
+                key="logout" 
+                color="danger"
+                startContent={<LogOut className="w-4 h-4" />}
+                onPress={() => signOut({ callbackUrl: "/login" })}
+                className="text-danger"
+              >
+                Log Out
+              </DropdownItem>
+            </DropdownMenu>
+          </Dropdown>
+        </motion.div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
-          <div className="bg-white p-4 rounded-lg shadow-sm text-center">
-            <div className="text-2xl font-bold text-gray-900">{stats.all}</div>
-            <div className="text-sm text-gray-600">ทั้งหมด</div>
-          </div>
-          <div className="bg-white p-4 rounded-lg shadow-sm text-center">
-            <div className="text-2xl font-bold text-blue-600">
-              {stats.active}
-            </div>
-            <div className="text-sm text-gray-600">กำลังทำ</div>
-          </div>
-          <div className="bg-white p-4 rounded-lg shadow-sm text-center">
-            <div className="text-2xl font-bold text-green-600">
-              {stats.completed}
-            </div>
-            <div className="text-sm text-gray-600">เสร็จแล้ว</div>
-          </div>
-        </div>
-
-        {/* Filter Tabs */}
-        <div className="bg-white rounded-lg shadow-sm p-2 mb-6 flex gap-2">
-          {(["all", "active", "completed"] as FilterType[]).map((f) => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`flex-1 px-4 py-2 rounded-md transition-colors ${
-                filter === f
-                  ? "bg-blue-600 text-white"
-                  : "text-gray-600 hover:bg-gray-100"
-              }`}
-            >
-              {f === "all" && "ทั้งหมด"}
-              {f === "active" && "กำลังทำ"}
-              {f === "completed" && "เสร็จแล้ว"}
-            </button>
-          ))}
-        </div>
-
-        {/* Add Task Button */}
-        <button
-          onClick={() => {
-            setEditingTask(null);
-            setIsFormOpen(true);
-          }}
-          className="w-full mb-6 p-4 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 font-medium"
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8"
         >
-          <Plus className="w-5 h-5" />
-          เพิ่มงานใหม่
-        </button>
+          <Card className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white">
+            <CardBody className="p-6 text-center">
+              <div className="text-3xl font-bold">{stats.all}</div>
+              <div className="text-blue-100">ทั้งหมด</div>
+            </CardBody>
+          </Card>
+          <Card className="bg-gradient-to-r from-amber-500 to-orange-500 text-white">
+            <CardBody className="p-6 text-center">
+              <div className="text-3xl font-bold">{stats.active}</div>
+              <div className="text-amber-100">กำลังทำ</div>
+            </CardBody>
+          </Card>
+          <Card className="bg-gradient-to-r from-green-500 to-emerald-600 text-white">
+            <CardBody className="p-6 text-center">
+              <div className="text-3xl font-bold">{stats.completed}</div>
+              <div className="text-green-100">เสร็จแล้ว</div>
+            </CardBody>
+          </Card>
+        </motion.div>
 
-        {/* Task List */}
-        <div className="space-y-3">
-          {filteredTasks.length === 0 ? (
-            <div className="text-center py-12 bg-white rounded-lg shadow-sm">
-              {filter === "all" && (
-                <>
-                  <Circle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500">
-                    ยังไม่มีงาน เริ่มเพิ่มงานแรกของคุณ!
-                  </p>
-                </>
-              )}
-              {filter === "active" && (
-                <>
-                  <CheckCircle2 className="w-16 h-16 text-green-300 mx-auto mb-4" />
-                  <p className="text-gray-500">
-                    ไม่มีงานที่ค้างอยู่ เก่งมาก! 🎉
-                  </p>
-                </>
-              )}
-              {filter === "completed" && (
-                <>
-                  <Circle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500">ยังไม่มีงานที่เสร็จ</p>
-                </>
+        {/* Main Content */}
+        <Card className="shadow-lg border-none">
+          <CardBody className="p-6">
+            {/* Header with Filter and Add Button */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+              <Tabs 
+                selectedKey={filter}
+                onSelectionChange={(key) => setFilter(key as FilterType)}
+                color="primary"
+                variant="underlined"
+              >
+                <Tab 
+                  key="all" 
+                  title={
+                    <div className="flex items-center gap-2">
+                      <span>ทั้งหมด</span>
+                      <Badge color="primary" variant="flat">{stats.all}</Badge>
+                    </div>
+                  } 
+                />
+                <Tab 
+                  key="active" 
+                  title={
+                    <div className="flex items-center gap-2">
+                      <span>กำลังทำ</span>
+                      <Badge color="warning" variant="flat">{stats.active}</Badge>
+                    </div>
+                  } 
+                />
+                <Tab 
+                  key="completed" 
+                  title={
+                    <div className="flex items-center gap-2">
+                      <span>เสร็จแล้ว</span>
+                      <Badge color="success" variant="flat">{stats.completed}</Badge>
+                    </div>
+                  } 
+                />
+              </Tabs>
+
+              <Button
+                color="primary"
+                size="lg"
+                startContent={<Plus className="w-5 h-5" />}
+                onPress={() => {
+                  setEditingTask(null);
+                  setIsFormOpen(true);
+                }}
+                className="font-medium"
+              >
+                เพิ่มงานใหม่
+              </Button>
+            </div>
+
+            {/* Task List */}
+            <div className="space-y-3">
+              {isFetching ? (
+                <div className="text-center py-12">
+                  <Spinner size="lg" color="primary" />
+                  <p className="mt-4 text-gray-600">กำลังโหลดงาน...</p>
+                </div>
+              ) : filteredTasks.length === 0 ? (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="text-center py-12 bg-gradient-to-br from-gray-50 to-blue-50 rounded-2xl"
+                >
+                  {filter === "all" && (
+                    <>
+                      <Circle className="w-20 h-20 text-gray-300 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">ยังไม่มีงาน</h3>
+                      <p className="text-gray-500 mb-4">เริ่มเพิ่มงานแรกของคุณ!</p>
+                      <Button
+                        color="primary"
+                        startContent={<Plus className="w-4 h-4" />}
+                        onPress={() => setIsFormOpen(true)}
+                      >
+                        สร้างงานแรก
+                      </Button>
+                    </>
+                  )}
+                  {filter === "active" && (
+                    <>
+                      <CheckCircle2 className="w-20 h-20 text-green-300 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">ไม่มีงานที่ค้างอยู่</h3>
+                      <p className="text-gray-500">เก่งมาก! คุณจัดการทุกอย่างเรียบร้อยแล้ว 🎉</p>
+                    </>
+                  )}
+                  {filter === "completed" && (
+                    <>
+                      <Circle className="w-20 h-20 text-gray-300 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">ยังไม่มีงานที่เสร็จ</h3>
+                      <p className="text-gray-500">เริ่มทำงานและทำเครื่องหมายว่าเสร็จแล้ว!</p>
+                    </>
+                  )}
+                </motion.div>
+              ) : (
+                <AnimatePresence>
+                  {filteredTasks.map((task, index) => (
+                    <motion.div
+                      key={task.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ delay: index * 0.1 }}
+                    >
+                      <TaskCard
+                        task={task}
+                        onToggle={handleToggle}
+                        onEdit={handleEdit}
+                        onDelete={handleDelete}
+                      />
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
               )}
             </div>
-          ) : (
-            filteredTasks.map((task) => (
-              <TaskCard
-                key={task.id}
-                task={task}
-                onToggle={handleToggle}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-              />
-            ))
-          )}
-        </div>
+          </CardBody>
+        </Card>
       </div>
 
       {/* Task Form Modal */}
-      {isFormOpen && (
-        <TaskForm
-          task={editingTask}
-          onSubmit={handleSubmit}
-          onClose={() => {
-            setIsFormOpen(false);
-            setEditingTask(null);
-          }}
-          isLoading={isLoading}
-        />
-      )}
+      <AnimatePresence>
+        {isFormOpen && (
+          <TaskForm
+            task={editingTask}
+            onSubmit={handleSubmit}
+            onClose={() => {
+              setIsFormOpen(false);
+              setEditingTask(null);
+            }}
+            isLoading={isLoading}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

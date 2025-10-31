@@ -1,5 +1,8 @@
-import { Trash2, Edit, Check } from 'lucide-react'
+import { Trash2, Edit, Check, Calendar } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { motion } from 'framer-motion'
+import { Button } from '@heroui/button'
+import { Card, CardBody } from '@heroui/card'
 
 interface Task {
   id: string
@@ -19,68 +22,82 @@ interface TaskCardProps {
 
 export function TaskCard({ task, onToggle, onEdit, onDelete }: TaskCardProps) {
   return (
-    <div
-      className={cn(
-        'group p-4 rounded-lg border bg-white shadow-sm transition-all hover:shadow-md',
-        task.isCompleted && 'opacity-60 bg-gray-50'
-      )}
+    <motion.div
+      whileHover={{ scale: 1.01 }}
+      whileTap={{ scale: 0.99 }}
     >
-      <div className="flex items-start gap-3">
-        {/* Checkbox */}
-        <button
-          onClick={() => onToggle(task.id, !task.isCompleted)}
-          className={cn(
-            'mt-1 flex-shrink-0 w-5 h-5 rounded border-2 transition-all',
-            task.isCompleted
-              ? 'bg-green-500 border-green-500'
-              : 'border-gray-300 hover:border-green-500'
-          )}
-        >
-          {task.isCompleted && <Check className="w-4 h-4 text-white" />}
-        </button>
+      <Card
+        className={cn(
+          'group border-none shadow-sm transition-all',
+          task.isCompleted && 'bg-gray-50'
+        )}
+      >
+        <CardBody className="p-4">
+          <div className="flex items-start gap-4">
+            {/* Checkbox */}
+            <Button
+              isIconOnly
+              variant="light"
+              onPress={() => onToggle(task.id, !task.isCompleted)}
+              className={cn(
+                'flex-shrink-0 w-8 h-8 rounded-full transition-all',
+                task.isCompleted
+                  ? 'bg-green-500 text-white'
+                  : 'border-2 border-gray-300 hover:border-green-500'
+              )}
+            >
+              {task.isCompleted && <Check className="w-4 h-4" />}
+            </Button>
 
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          <h3
-            className={cn(
-              'font-medium text-gray-900',
-              task.isCompleted && 'line-through text-gray-500'
-            )}
-          >
-            {task.title}
-          </h3>
-          {task.description && (
-            <p className="mt-1 text-sm text-gray-600">{task.description}</p>
-          )}
-          <p className="mt-2 text-xs text-gray-400">
-            {new Date(task.createdAt).toLocaleDateString('th-TH', {
-              year: 'numeric',
-              month: 'short',
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-            })}
-          </p>
-        </div>
+            {/* Content */}
+            <div className="flex-1 min-w-0">
+              <h3
+                className={cn(
+                  'font-medium text-gray-900 text-lg',
+                  task.isCompleted && 'line-through text-gray-500'
+                )}
+              >
+                {task.title}
+              </h3>
+              {task.description && (
+                <p className="mt-2 text-gray-600 leading-relaxed">{task.description}</p>
+              )}
+              <div className="mt-3 flex items-center gap-2 text-xs text-gray-400">
+                <Calendar className="w-3 h-3" />
+                {new Date(task.createdAt).toLocaleDateString('th-TH', {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+              </div>
+            </div>
 
-        {/* Actions */}
-        <div className="flex-shrink-0 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button
-            onClick={() => onEdit(task)}
-            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-            title="แก้ไข"
-          >
-            <Edit className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => onDelete(task.id)}
-            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-            title="ลบ"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-    </div>
+            {/* Actions */}
+            <div className="flex-shrink-0 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <Button
+                isIconOnly
+                variant="light"
+                onPress={() => onEdit(task)}
+                className="text-gray-400 hover:text-blue-600"
+                title="แก้ไข"
+              >
+                <Edit className="w-4 h-4" />
+              </Button>
+              <Button
+                isIconOnly
+                variant="light"
+                onPress={() => onDelete(task.id)}
+                className="text-gray-400 hover:text-red-600"
+                title="ลบ"
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        </CardBody>
+      </Card>
+    </motion.div>
   )
 }

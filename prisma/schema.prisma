@@ -11,14 +11,14 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  password  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  tasks     Task[]
-  resetTokens PasswordResetToken[]   // ✅ เพิ่มบรรทัดนี้
+  id          String               @id @default(cuid())
+  email       String               @unique
+  name        String?
+  password    String
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  resetTokens PasswordResetToken[]
+  tasks       Task[]
 
   @@index([email])
 }
@@ -39,9 +39,9 @@ model Task {
 }
 
 model PasswordResetToken {
-  id        String   @id @default(cuid())
-  token     String   @unique
-  user      User     @relation(fields: [userId], references: [id])
-  userId    String
-  expires   DateTime
+  id      String   @id @default(cuid())
+  token   String   @unique
+  userId  String
+  expires DateTime
+  user    User     @relation(fields: [userId], references: [id])
 }

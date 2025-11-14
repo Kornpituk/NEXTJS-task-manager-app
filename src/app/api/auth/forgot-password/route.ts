@@ -4,6 +4,13 @@ import nodemailer from "nodemailer";
 import crypto from "crypto";
 
 export async function POST(req: Request) {
+  try {
+    await prisma.$connect();
+    console.log("DB CONNECTED!");
+  } catch (err) {
+    console.error("DB ERROR:", err);
+  }
+
   const { email } = await req.json();
 
   const user = await prisma.user.findUnique({ where: { email } });
